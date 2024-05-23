@@ -1,4 +1,5 @@
 #include<bits/stdc++.h>
+#include <ctime>
 using namespace std;
 
 enum class SpotSize { SMALL, MEDIUM, LARGE };
@@ -42,6 +43,57 @@ public:
     }
 };
 // ----------- END VEHICLE ------------ //
+
+
+
+// ------------- TICKET -------------- //
+class Ticket {
+public:
+    std::string ticket_id;
+    Vehicle* vehicle;
+    time_t entry_time;
+    time_t exit_time;
+    bool paid;
+
+    Ticket(std::string id, Vehicle* v) : ticket_id(id), vehicle(v), paid(false) {
+        entry_time = std::time(nullptr);
+    }
+
+    double calculateFee() {
+        exit_time = std::time(nullptr);
+        double duration = difftime(exit_time, entry_time) / 3600.0; // hours
+        double rate = 2.0; // assuming a flat rate of $2 per hour
+        return duration * rate;
+    }
+
+    void markPaid() {
+        paid = true;
+    }
+};
+// ----------- END TICKET ------------ //
+
+
+
+// ------------- PAYMENT ------------- //
+class Payment {
+public:
+    Ticket* ticket;
+    double amount;
+    time_t payment_time;
+
+    Payment(Ticket* t, double amt) : ticket(t), amount(amt) {
+        payment_time = std::time(nullptr);
+    }
+
+    bool processPayment(double amount) {
+        if (amount >= ticket->calculateFee()) {
+            ticket->markPaid();
+            return true;
+        }
+        return false;
+    }
+};
+// ----------- END PAYMENT ----------- //
 
 
 
@@ -127,6 +179,7 @@ public:
     std::vector<ParkingLevel> levels;
     int capacity;
     int occupied_spots;
+    std::vector<Ticket> tickets;
 
     ParkingLot() : capacity(0), occupied_spots(0) {}
 
@@ -135,9 +188,16 @@ public:
         capacity += level.capacity;
     }
 
-    bool parkVehicle(Vehicle* vehicle) {
+    Ticket issueTicket(Vehicle* vehicle) {
+        std::string ticket_id = "TICKET_" + std::to_string(tickets.size() + 1);
+        Ticket ticket(ticket_id, vehicle);
+        tickets.push_back(ticket);
+        return ticket;
+    }
+
+    bool parkVehicle(Ticket& ticket) {
         for (auto& level : levels) {
-            if (level.parkVehicle(vehicle)) {
+            if (level.parkVehicle(ticket.vehicle)) {
                 occupied_spots++;
                 return true;
             }
@@ -145,14 +205,23 @@ public:
         return false;
     }
 
-    bool leaveVehicle(Vehicle* vehicle) {
+    bool leaveVehicle(Ticket& ticket) {
+        if (!ticket.paid) {
+            return false;
+        }
         for (auto& level : levels) {
-            if (level.leaveVehicle(vehicle)) {
+            if (level.leaveVehicle(ticket.vehicle)) {
                 occupied_spots--;
                 return true;
             }
         }
         return false;
+    }
+
+    bool payForParking(Ticket& ticket) {
+        double fee = ticket.calculateFee();
+        Payment payment(&ticket, fee);
+        return payment.processPayment(fee);
     }
 
     int getAvailableSpots() {
@@ -182,18 +251,28 @@ int main(){
     Truck truck("XYZ789");
     Motorcycle motorcycle("MOTO456");
 
+    // Issue tickets for vehicles
+    Ticket carTicket = parkingLot.issueTicket(&car);
+    Ticket truckTicket = parkingLot.issueTicket(&truck);
+    Ticket motorcycleTicket = parkingLot.issueTicket(&motorcycle);
+
     // Park vehicles
-    parkingLot.parkVehicle(&car);
-    parkingLot.parkVehicle(&truck);
-    parkingLot.parkVehicle(&motorcycle);
+    parkingLot.parkVehicle(carTicket);
+    parkingLot.parkVehicle(truckTicket);
+    parkingLot.parkVehicle(motorcycleTicket);
 
     // Get available spots
     int availableSpots = parkingLot.getAvailableSpots(); // Should be 0 if all spots are occupied
 
-    // Leave vehicles
-    parkingLot.leaveVehicle(&car);
-    parkingLot.leaveVehicle(&truck);
-    parkingLot.leaveVehicle(&motorcycle);
+    // Pay for parking
+    parkingLot.payForParking(carTicket);
+    parkingLot.payForParking(truckTicket);
+    parkingLot.payForParking(motorcycleTicket);
+
+    // Leave vehicles after payment
+    parkingLot.leaveVehicle(carTicket);
+    parkingLot.leaveVehicle(truckTicket);
+    parkingLot.leaveVehicle(motorcycleTicket);
 
     // Get available spots
     availableSpots = parkingLot.getAvailableSpots(); // Should be 3 after all vehicles leave

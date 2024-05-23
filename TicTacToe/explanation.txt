@@ -1,0 +1,66 @@
+1. Classes and Objects
+a. Game
+    - Manages the overall game state and flow.
+    - Attributes:
+        + board: Board
+        + players: List[Player]
+        + current_turn: Player
+        + status: GameStatus (Enum: ONGOING, DRAW, WIN)
+    - Methods:
+        + initializeGame()
+        + makeMove(Position position) -> bool
+        + checkWin() -> bool
+        + checkDraw() -> bool
+        + switchTurn()
+b. Board
+    - Represents the Tic Tac Toe board.
+    - Attributes:
+        + grid: 3x3 matrix of Cell
+    - Methods:
+        + resetBoard()
+        + isCellEmpty(Position position) -> bool
+        + placeMark(Position position, Mark mark)
+        + printBoard()
+c. Cell
+    - Represents each cell on the board.
+    - Attributes:
+        + position: Position
+        + mark: Optional[Mark]
+d. Position
+    - Represents the position of a cell on the board.
+    - Attributes:
+        + row: int
+        + col: int
+e. Player
+    - Represents a player in the game.
+    - Attributes:
+        + name: string
+        + mark: Mark (Enum: X, O)
+    - Methods:
+        + makeMove(Position position, Game& game) -> bool
+
+2. Enums
+a. Mark
+    - Enum for player marks: X, O, EMPTY
+b. GameStatus
+    - Enum for game statuses: ONGOING, DRAW, WIN
+
+3. Methods Overview
+Game
+    - initializeGame(): Sets up players and board.
+    - makeMove(position): Validates and makes a move, updates game status.
+    - checkWin(): Checks if the current player has won.
+    - checkDraw(): Checks if the game is a draw.
+    - switchTurn(): Switches the turn to the other player.
+Board
+    - resetBoard(): Initializes the board with empty cells.
+    - isCellEmpty(position): Checks if the cell at the given position is empty.
+    - placeMark(position, mark): Places a mark on the board.
+    - printBoard(): Prints the current state of the board.
+Player
+    - makeMove(position, game): Attempts to make a move and returns success status.
+4. Relationships
+    - Game contains a Board and two Players.
+    - Board contains 9 Cells.
+    - Each Cell contains a Position and a Mark.
+    - Players make moves, which involves interaction between Game, Board, and Cell objects.
