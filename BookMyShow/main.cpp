@@ -24,6 +24,8 @@ public:
 
 
 // -------------- MOVIE -------------- //
+// Assuming this is a global list of theaters in the system.
+extern std::vector<Theater> theaters;
 class Movie {
 public:
     std::string movie_id;
@@ -38,6 +40,20 @@ public:
 
     void addShow(const Show& show) {
         shows.push_back(show);
+    }
+
+    std::vector<Show> listShowsOfMovie() const {
+        std::vector<Show> movieShows;
+        for (const auto& theater : theaters) {
+            for (const auto& screen : theater.screens) {
+                for (const auto& show : screen.shows) {
+                    if (show.movie == this) {
+                        movieShows.push_back(show);
+                    }
+                }
+            }
+        }
+        return movieShows;
     }
 };
 // ------------ END MOVIE ------------ //
@@ -58,7 +74,16 @@ public:
     void addScreen(const Screen& screen) {
         screens.push_back(screen);
     }
+
+    std::vector<Show> listShowsInTheater() const {
+        std::vector<Show> shows;
+        for (const auto& screen : screens) {
+            shows.insert(shows.end(), screen.shows.begin(), screen.shows.end());
+        }
+        return shows;
+    }
 };
+
 // ----------- END THEATRE ----------- //
 
 
@@ -170,21 +195,46 @@ int main() {
     // Create movie
     Movie movie("MOV123", "Inception", 148, "Sci-Fi", "English");
 
-    // Create theater and screen
-    Theater theater("TH123", "PVR Cinemas", "123 Main St");
-    Screen screen("SCR1", &theater);
+    // Create theaters
+    Theater theater1("TH123", "PVR Cinemas", "123 Main St");
+    Theater theater2("TH124", "AMC Theaters", "456 Broadway");
 
-    // Add seats to screen
-    std::vector<Seat> seats = { Seat("S1", "1A"), Seat("S2", "1B"), Seat("S3", "1C") };
-    screen.addSeats(seats);
+    // Create screens
+    Screen screen1("SCR1", &theater1);
+    Screen screen2("SCR2", &theater2);
 
-    // Add screen to theater
-    theater.addScreen(screen);
+    // Add screens to theaters
+    theater1.addScreen(screen1);
+    theater2.addScreen(screen2);
 
-    // Create show
-    time_t showTime = std::time(nullptr);
-    Show show("SHOW1", &movie, &screen, showTime);
-    show.seats = seats;
+    // Create shows
+    time_t showTime1 = std::time(nullptr);
+    time_t showTime2 = showTime1 + 3600; // Another show an hour later
 
-    // Add show to movie and screen
+    Show show1("SHOW1", &movie, &screen1, showTime1);
+    Show show2("SHOW2", &movie, &screen2, showTime2);
+
+    // Add shows to screens
+    screen1.addShow(show1);
+    screen2.addShow(show2);
+
+    // Add theaters to global list
+    theaters.push_back(theater1);
+    theaters.push_back(theater2);
+
+    // List shows in theater1
+    std::vector<Show> showsInTheater1 = theater1.listShowsInTheater();
+    std::cout << "Shows in " << theater1.name << ":\n";
+    for (const auto& show : showsInTheater1) {
+        std::cout << "Show ID: " << show.show_id << ", Movie: " << show.movie->title << "\n";
+    }
+
+    // List shows of the movie across all theaters
+    std::vector<Show> showsOfMovie = movie.listShowsOfMovie();
+    std::cout << "Shows of movie " << movie.title << ":\n";
+    for (const auto& show : showsOfMovie) {
+        std::cout << "Show ID: " << show.show_id << ", Theater: " << show.screen->theater->name << "\n";
+    }
+
+    return 0;
 }
