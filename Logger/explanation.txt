@@ -1,0 +1,13 @@
+Here are the main design patterns used:
+
+1. Singleton Pattern
+    Class: ActivityLogger
+    Purpose: To ensure that there is only one instance of ActivityLogger managing all the logs throughout the application.
+
+2. Observer Pattern
+    Class: User and ActivityLogger
+    Purpose: The User class acts as the subject that notifies ActivityLogger of new activities, making the logger observe user activities.
+
+3. Factory Method Pattern
+    Class: ActivityLog
+    Purpose: To create instances of ActivityLog objects. This pattern allows for the creation of logs without specifying the exact class of object that will be created.
