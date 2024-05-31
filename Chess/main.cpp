@@ -9,6 +9,7 @@ enum class GameStatus { ONGOING, CHECK, CHECKMATE, STALEMATE };
 class Position {
 public:
     int x, y;
+    Position() {}
     Position(int x, int y) : x(x), y(y) {}
 };
 
@@ -53,7 +54,28 @@ public:
 
     Player(Color col, std::string n) : color(col), name(n) {}
 
-    bool makeMove(Position start_pos, Position end_pos, Game& game);
+    bool makeMove(Position start_pos, Position end_pos, Game& game){
+    // Validate that it's the player's turn
+    if (game.current_turn != this) {
+        std::cout << "It's not your turn!\n";
+        return false;
+    }
+
+    // Validate that the piece at the start position belongs to the player
+    Piece* piece = game.board.getPieceAt(start_pos);
+    if (!piece || piece->color != color) {
+        std::cout << "Invalid move: No piece of yours at the start position.\n";
+        return false;
+    }
+
+    // Make the move on the board
+    if (game.makeMove(start_pos, end_pos)) {
+        return true;
+    }
+
+    std::cout << "Invalid move.\n";
+    return false;
+}
 };
 // ----------- END PLAYER ---------- //
 
@@ -83,7 +105,20 @@ public:
     Piece* getPieceAt(Position position){
         return squares[position.x][position.y]->piece;
     }
-    bool movePiece(Position start_pos, Position end_pos);
+    bool movePiece(Position start_pos, Position end_pos){
+        Piece* piece = getPieceAt(start_pos);
+        
+        if (piece){
+            vector<Position> possiblePositions = piece->getPossibleMoves(*this);
+            if(std::find(possiblePositions.begin(), possiblePositions.end(), end_pos) != possiblePositions.end()) {
+                squares[end_pos.x][end_pos.y]->piece = piece;
+                squares[start_pos.x][start_pos.y]->piece = nullptr;
+                piece->position = end_pos;
+                return true;
+            }
+        }
+        return false;
+    }
 };
 // ----------- END BOARD ---------- //
 
@@ -124,13 +159,29 @@ int main() {
 
     Game game(player1, player2);
 
-    Position start_pos(0, 1);
-    Position end_pos(0, 2);
+    while (game.status == GameStatus::ONGOING) {
+        // Get current player's move
+        Position start_pos, end_pos;
+        std::cout << game.current_turn->name << "'s turn. Enter start position (x y): ";
+        std::cin >> start_pos.x >> start_pos.y;
+        std::cout << "Enter end position (x y): ";
+        std::cin >> end_pos.x >> end_pos.y;
 
-    if (game.makeMove(start_pos, end_pos)) {
-        std::cout << "Move successful!\n";
-    } else {
-        std::cout << "Move failed!\n";
+        // Make the move
+        if (game.current_turn->makeMove(start_pos, end_pos, game)) {
+            std::cout << "Move successful!\n";
+            if (game.isCheckmate()) {
+                game.status = GameStatus::CHECKMATE;
+                std::cout << game.current_turn->name << " wins by checkmate!\n";
+            } else if (game.isStalemate()) {
+                game.status = GameStatus::STALEMATE;
+                std::cout << "Game ends in stalemate!\n";
+            } else if (game.isCheck()) {
+                std::cout << "Check!\n";
+            }
+        } else {
+            std::cout << "Move failed. Try again.\n";
+        }
     }
 
     return 0;
