@@ -9,6 +9,7 @@ enum class GameStatus { ONGOING, CHECK, CHECKMATE, STALEMATE };
 class Position {
 public:
     int x, y;
+    Position(int x, int y) : x(x), y(y) {}
 };
 
 class Square {
@@ -67,8 +68,21 @@ public:
         resetBoard();
     }
 
-    void resetBoard();
-    Piece* getPieceAt(Position position);
+    void resetBoard(){
+        for (int i = 0; i < 8; ++i) {
+            for (int j = 0; j < 8; ++j) {
+                squares[i][j] = new Square(Position(i, j));
+            }
+        }
+
+        // Place pieces on the board for the initial setup
+        // For simplicity, only Kings are placed; other pieces should be placed similarly
+        squares[0][4]->piece = new King(Color::WHITE, Position(0, 4));
+        squares[7][4]->piece = new King(Color::BLACK, Position(7, 4));
+    }
+    Piece* getPieceAt(Position position){
+        return squares[position.x][position.y]->piece;
+    }
     bool movePiece(Position start_pos, Position end_pos);
 };
 // ----------- END BOARD ---------- //
@@ -87,8 +101,16 @@ public:
         initializeGame();
     }
 
-    void initializeGame();
-    bool makeMove(Position start_pos, Position end_pos);
+    void Game::initializeGame() {
+        board.resetBoard();
+    }
+    bool Game::makeMove(Position start_pos, Position end_pos) {
+        if (board.movePiece(start_pos, end_pos)) {
+            current_turn = (current_turn == &players[0]) ? &players[1] : &players[0];
+            return true;
+        }
+        return false;
+    }
     bool isCheck();
     bool isCheckmate();
     bool isStalemate();
@@ -96,8 +118,20 @@ public:
 // ----------- END GAME ---------- //
 
 
+int main() {
+    Player player1(Color::WHITE, "Alice");
+    Player player2(Color::BLACK, "Bob");
 
+    Game game(player1, player2);
 
-int main(){
+    Position start_pos(0, 1);
+    Position end_pos(0, 2);
 
+    if (game.makeMove(start_pos, end_pos)) {
+        std::cout << "Move successful!\n";
+    } else {
+        std::cout << "Move failed!\n";
+    }
+
+    return 0;
 }
